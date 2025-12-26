@@ -17,6 +17,7 @@ const Dashboard = () => {
     // Universal State for tabs
     const [activeTab, setActiveTab] = useState('dashboard');
     const [newDriver, setNewDriver] = useState({ name: '', email: '', password: '', phone: '', vehicle: '' });
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     useEffect(() => {
         if (!user) return;
@@ -221,29 +222,66 @@ const Dashboard = () => {
             ];
         }
 
+        const handleTabClick = (tabId) => {
+            setActiveTab(tabId);
+            setIsSidebarOpen(false); // Close sidebar on mobile after selection
+        };
+
         return (
-            <div style={{ width: '250px', background: 'var(--card-bg)', borderRight: '1px solid var(--border)', padding: '2rem', minHeight: '100vh' }}>
-                <h2 style={{ marginBottom: '2rem', color: 'var(--primary)' }}>{role.charAt(0).toUpperCase() + role.slice(1)} Panel</h2>
-                <ul style={{ listStyle: 'none', padding: 0 }}>
-                    {tabs.map(tab => (
-                        <li key={tab.id} style={{ marginBottom: '1rem' }}>
-                            <button 
-                                onClick={() => setActiveTab(tab.id)} 
-                                style={{ 
-                                    background: activeTab === tab.id ? 'rgba(99, 102, 241, 0.1)' : 'transparent', 
-                                    color: activeTab === tab.id ? 'var(--primary)' : 'inherit',
-                                    border: 'none', width: '100%', textAlign: 'left', padding: '0.75rem', borderRadius: '8px', cursor: 'pointer', fontWeight: '500'
-                                }}
-                            >
-                                {tab.label}
-                            </button>
-                        </li>
-                    ))}
-                </ul>
-                <div style={{ marginTop: 'auto', paddingTop: '2rem' }}>
-                    <button onClick={handleLogout} className="btn btn-secondary" style={{ width: '100%' }}>Logout</button>
+            <>
+                {/* Mobile Overlay */}
+                {isSidebarOpen && (
+                    <div 
+                        onClick={() => setIsSidebarOpen(false)}
+                        style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'rgba(0, 0, 0, 0.5)',
+                            zIndex: 998,
+                            display: 'none'
+                        }}
+                        className="mobile-overlay"
+                    />
+                )}
+                
+                {/* Sidebar */}
+                <div 
+                    style={{ 
+                        width: '250px', 
+                        background: 'var(--bg-card)', 
+                        borderRight: '1px solid var(--border)', 
+                        padding: '2rem', 
+                        minHeight: '100vh',
+                        position: 'relative',
+                        zIndex: 999
+                    }}
+                    className={`sidebar ${isSidebarOpen ? 'sidebar-open' : ''}`}
+                >
+                    <h2 style={{ marginBottom: '2rem', color: 'var(--primary)' }}>{role.charAt(0).toUpperCase() + role.slice(1)} Panel</h2>
+                    <ul style={{ listStyle: 'none', padding: 0 }}>
+                        {tabs.map(tab => (
+                            <li key={tab.id} style={{ marginBottom: '1rem' }}>
+                                <button 
+                                    onClick={() => handleTabClick(tab.id)} 
+                                    style={{ 
+                                        background: activeTab === tab.id ? 'var(--primary-light)' : 'transparent', 
+                                        color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-light)',
+                                        border: 'none', width: '100%', textAlign: 'left', padding: '0.75rem', borderRadius: '8px', cursor: 'pointer', fontWeight: '500'
+                                    }}
+                                >
+                                    {tab.label}
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                    <div style={{ marginTop: 'auto', paddingTop: '2rem' }}>
+                        <button onClick={handleLogout} className="btn btn-secondary" style={{ width: '100%' }}>Logout</button>
+                    </div>
                 </div>
-            </div>
+            </>
         );
     };
 
@@ -397,7 +435,10 @@ const Dashboard = () => {
                                                     </div>
                                                     <div style={{ flex: 1 }}>
                                                         <p style={{ fontWeight: '600' }}>{ride.driver?.name}</p>
-                                                        <p className="text-muted" style={{ fontSize: '0.8rem' }}>Your Driver</p>
+                                                        {ride.driver?.phone && (
+                                                            <p style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: '500' }}>📱 {ride.driver.phone}</p>
+                                                        )}
+                                                        <p className="text-muted" style={{ fontSize: '0.75rem' }}>Your Driver</p>
                                                     </div>
                                                     {ride.driver?.phone && (
                                                         <a 
@@ -511,11 +552,11 @@ const Dashboard = () => {
                         <p className="text-muted">View all your past rides and bookings.</p>
                     </div>
                     
-                    {rides.length === 0 ? (
+                    {rides.filter(r => ['completed', 'cancelled'].includes(r.status)).length === 0 ? (
                         <div className="card" style={{ padding: '4rem', textAlign: 'center', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05))' }}>
                             <p style={{ fontSize: '3rem', marginBottom: '1rem' }}>🚗</p>
-                            <p style={{ fontSize: '1.2rem', fontWeight: '600' }}>No Rides Yet</p>
-                            <p className="text-muted" style={{ marginTop: '0.5rem' }}>Book your first ride to get started!</p>
+                            <p style={{ fontSize: '1.2rem', fontWeight: '600' }}>No Completed Rides Yet</p>
+                            <p className="text-muted" style={{ marginTop: '0.5rem' }}>Your completed rides will appear here.</p>
                             <button 
                                 onClick={() => setActiveTab('dashboard')}
                                 className="btn btn-primary"
@@ -526,7 +567,7 @@ const Dashboard = () => {
                         </div>
                     ) : (
                         <div style={{ display: 'grid', gap: '1rem' }}>
-                            {rides.map((ride, index) => {
+                            {rides.filter(r => ['completed', 'cancelled'].includes(r.status)).map((ride, index) => {
                                 const statusBadge = getStatusBadge(ride.status);
                                 return (
                                     <div key={ride._id} className="card" style={{ 
@@ -2486,15 +2527,103 @@ const Dashboard = () => {
     // Main Layout
     return (
         <div style={{ display: 'flex', minHeight: '100vh' }}>
+            {/* Mobile Hamburger Menu */}
+            <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="hamburger-menu"
+                style={{
+                    position: 'fixed',
+                    top: '1rem',
+                    left: '1rem',
+                    zIndex: 1000,
+                    width: '44px',
+                    height: '44px',
+                    background: 'var(--card-bg)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px',
+                    display: 'none',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    fontSize: '1.5rem'
+                }}
+                aria-label="Toggle menu"
+            >
+                {isSidebarOpen ? '✕' : '☰'}
+            </button>
+            
             <Sidebar role={user.role} />
             
-            <div style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
+            <div style={{ flex: 1, padding: '2rem', overflowY: 'auto' }} className="dashboard-content">
                 <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
                     {user.role === 'user' && renderUserContent()}
                     {user.role === 'driver' && renderDriverContent()}
                     {user.role === 'admin' && renderAdminContent()}
                 </div>
             </div>
+            
+            <style>{`
+                @media (max-width: 768px) {
+                    .hamburger-menu {
+                        display: flex !important;
+                    }
+                    
+                    .sidebar {
+                        position: fixed !important;
+                        top: 0;
+                        left: -250px;
+                        height: 100vh;
+                        transition: left 0.3s ease;
+                        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+                    }
+                    
+                    .sidebar-open {
+                        left: 0 !important;
+                    }
+                    
+                    .mobile-overlay {
+                        display: block !important;
+                    }
+                    
+                    .dashboard-content {
+                        padding: 1rem !important;
+                        padding-top: 4rem !important;
+                    }
+                    
+                    /* Responsive grids */
+                    div[style*="grid-template-columns"] {
+                        grid-template-columns: 1fr !important;
+                    }
+                    
+                    /* Better spacing on mobile */
+                    div[style*="gridTemplateColumns"] {
+                        grid-template-columns: 1fr !important;
+                        gap: 1rem !important;
+                    }
+                }
+                
+                @media (max-width: 480px) {
+                    .dashboard-content {
+                        padding: 0.75rem !important;
+                        padding-top: 4rem !important;
+                    }
+                    
+                    /* Stack all grid layouts */
+                    div[style*="grid-template-columns"],
+                    div[style*="gridTemplateColumns"] {
+                        grid-template-columns: 1fr !important;
+                    }
+                    
+                    /* Reduce font sizes for mobile */
+                    h1 {
+                        font-size: 1.5rem !important;
+                    }
+                    
+                    h2 {
+                        font-size: 1.25rem !important;
+                    }
+                }
+            `}</style>
         </div>
     );
 };

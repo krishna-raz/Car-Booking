@@ -173,8 +173,8 @@ router.get('/my-rides', protect, async (req, res) => {
         }
 
         const rides = await Ride.find(query)
-            .populate('user', 'name')
-            .populate('driver', 'name vehicle')
+            .populate('user', 'name phone')
+            .populate('driver', 'name phone vehicle')
             .sort({ createdAt: -1 });
             
         res.json(rides);
