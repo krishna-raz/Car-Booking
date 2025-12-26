@@ -65,14 +65,7 @@ const Dashboard = () => {
                 });
                 setAvailableDrivers(driversRes.data);
                 
-                // Fetch locations and fare config for admin
-                try {
-                    const locRes = await api.get('/admin/locations');
-                    setLocations(locRes.data.areas || []);
-                } catch (err) {
-                    console.log('Error fetching locations');
-                }
-                
+                // Fetch fare config for admin
                 try {
                     const fareRes = await api.get('/admin/fare-config');
                     setFareConfig(fareRes.data);
@@ -241,7 +234,6 @@ const Dashboard = () => {
                 { id: 'dashboard', label: '📊 Dashboard' },
                 { id: 'new-rides', label: '🚗 New Ride Requests' },
                 { id: 'create-ride', label: '➕ Create Ride' },
-                { id: 'locations', label: '📍 Locations' },
                 { id: 'fare-settings', label: '💵 Fare Settings' },
                 { id: 'payments', label: '💰 Payments' },
                 { id: 'drivers', label: '👷 Drivers' },

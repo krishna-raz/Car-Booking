@@ -2,7 +2,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
-import kolkataLocations from '../data/locations.json';
 import './Home.css';
 
 // Kolkata landmark images
@@ -13,7 +12,7 @@ const kolkataImages = [
     'https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=1920&q=80', // Indian Street
 ];
 
-// Hero Booking Form Component
+// Hero Booking Form Component with Nominatim Search
 const HeroBookingForm = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -25,8 +24,11 @@ const HeroBookingForm = () => {
     const [showPickupDropdown, setShowPickupDropdown] = useState(false);
     const [showDropDropdown, setShowDropDropdown] = useState(false);
     const [fareConfig, setFareConfig] = useState({ baseFare: 30, perKmRate: 12, minimumFare: 50 });
+    const [isSearchingPickup, setIsSearchingPickup] = useState(false);
+    const [isSearchingDrop, setIsSearchingDrop] = useState(false);
+    const [pickupCoords, setPickupCoords] = useState(null);
+    const [dropCoords, setDropCoords] = useState(null);
 
-    // Fetch fare config on mount
     useEffect(() => {
         const fetchFareConfig = async () => {
             try {
@@ -39,7 +41,62 @@ const HeroBookingForm = () => {
         fetchFareConfig();
     }, []);
 
-    // Calculate distance using Haversine formula
+    // Search using Nominatim API
+    const searchLocationAPI = async (query, type) => {
+        if (!query || query.length < 3) {
+            if (type === 'pickup') setPickupSuggestions([]);
+            else setDropSuggestions([]);
+            return;
+        }
+        if (type === 'pickup') setIsSearchingPickup(true);
+        else setIsSearchingDrop(true);
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&accept-language=en&q=${encodeURIComponent(query)}, West Bengal, India&limit=5`
+            );
+            const data = await response.json();
+            if (type === 'pickup') {
+                setPickupSuggestions(data);
+                setShowPickupDropdown(true);
+            } else {
+                setDropSuggestions(data);
+                setShowDropDropdown(true);
+            }
+        } catch (error) {
+            console.error('Search error:', error);
+        }
+        if (type === 'pickup') setIsSearchingPickup(false);
+        else setIsSearchingDrop(false);
+    };
+
+    const handlePickupChange = (value) => {
+        setPickup(value);
+        setPickupCoords(null);
+        setFare(0);
+        setTimeout(() => searchLocationAPI(value, 'pickup'), 500);
+    };
+
+    const handleDropChange = (value) => {
+        setDrop(value);
+        setDropCoords(null);
+        setFare(0);
+        setTimeout(() => searchLocationAPI(value, 'drop'), 500);
+    };
+
+    const selectPickup = (result) => {
+        const name = result.display_name.split(',')[0];
+        setPickup(name);
+        setPickupCoords({ lat: parseFloat(result.lat), lng: parseFloat(result.lon) });
+        setShowPickupDropdown(false);
+    };
+
+    const selectDrop = (result) => {
+        const name = result.display_name.split(',')[0];
+        setDrop(name);
+        setDropCoords({ lat: parseFloat(result.lat), lng: parseFloat(result.lon) });
+        setShowDropDropdown(false);
+    };
+
     const calculateDistance = (lat1, lng1, lat2, lng2) => {
         const R = 6371;
         const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -51,76 +108,27 @@ const HeroBookingForm = () => {
     };
 
     const calculateFare = () => {
-        const pickupArea = kolkataLocations.areas.find(a => 
-            pickup.toLowerCase().includes(a.name.toLowerCase())
-        );
-        const dropArea = kolkataLocations.areas.find(a => 
-            drop.toLowerCase().includes(a.name.toLowerCase())
-        );
-        
-        if (pickupArea && dropArea) {
-            const distance = calculateDistance(pickupArea.lat, pickupArea.lng, dropArea.lat, dropArea.lng);
+        if (pickupCoords && dropCoords) {
+            const distance = calculateDistance(pickupCoords.lat, pickupCoords.lng, dropCoords.lat, dropCoords.lng);
             let calculatedFare = fareConfig.baseFare + (distance * fareConfig.perKmRate);
             calculatedFare = Math.max(calculatedFare, fareConfig.minimumFare);
             setFare(Math.round(calculatedFare));
         } else {
-            // Fallback if locations not found
-            const defaultFare = fareConfig.baseFare + (5 * fareConfig.perKmRate);
-            setFare(Math.round(Math.max(defaultFare, fareConfig.minimumFare)));
+            alert('Please select valid pickup and drop locations from suggestions');
         }
-    };
-
-    const searchLocations = (query) => {
-        if (!query || query.length < 2) return [];
-        return kolkataLocations.areas.filter(area =>
-            area.name.toLowerCase().includes(query.toLowerCase())
-        );
-    };
-
-    const handlePickupChange = (value) => {
-        setPickup(value);
-        setPickupSuggestions(searchLocations(value));
-        setShowPickupDropdown(value.length >= 2);
-    };
-
-    const handleDropChange = (value) => {
-        setDrop(value);
-        setDropSuggestions(searchLocations(value));
-        setShowDropDropdown(value.length >= 2);
-    };
-
-    const isKolkataLocation = (location) => {
-        const areaNames = kolkataLocations.areas.map(area => area.name.toLowerCase());
-        return areaNames.some(area => location.toLowerCase().includes(area));
-    };
-
-    const getLocationCoords = (location) => {
-        const area = kolkataLocations.areas.find(a => 
-            location.toLowerCase().includes(a.name.toLowerCase())
-        );
-        return area 
-            ? { lat: area.lat, lng: area.lng } 
-            : { lat: kolkataLocations.coordinates.lat, lng: kolkataLocations.coordinates.lng };
     };
 
     const handleBook = async (e) => {
         e.preventDefault();
-        
-        // If user is not logged in, redirect to login
         if (!user) {
             alert('Please login to book a ride');
             navigate('/login?role=user');
             return;
         }
-
-        if (!isKolkataLocation(pickup) || !isKolkataLocation(drop)) {
-            alert('Please select valid Kolkata locations');
+        if (!pickupCoords || !dropCoords) {
+            alert('Please select locations from dropdown');
             return;
         }
-
-        const pickupCoords = getLocationCoords(pickup);
-        const dropCoords = getLocationCoords(drop);
-
         try {
             await api.post('/rides', {
                 pickupLocation: { address: pickup, lat: pickupCoords.lat, lng: pickupCoords.lng },
@@ -136,75 +144,62 @@ const HeroBookingForm = () => {
         }
     };
 
-    const pickupValid = pickup.length < 2 || isKolkataLocation(pickup);
-    const dropValid = drop.length < 2 || isKolkataLocation(drop);
+    const isFormValid = pickupCoords && dropCoords && fare > 0;
 
     return (
         <div className="hero-booking-form">
             <div className="booking-form-header">
                 <h3>🚕 Book Your Ride</h3>
-                <span className="kolkata-badge">📍 Kolkata Only</span>
+                <span className="kolkata-badge">📍 West Bengal</span>
             </div>
             
             <form onSubmit={handleBook}>
                 <div className="form-group" style={{ position: 'relative' }}>
                     <input 
                         type="text" 
-                        placeholder="📍 Pickup Location (e.g., Howrah)" 
+                        placeholder="🔍 Search Pickup Location..." 
                         value={pickup} 
                         onChange={(e) => handlePickupChange(e.target.value)}
-                        onFocus={() => pickup.length >= 2 && setShowPickupDropdown(true)}
-                        onBlur={() => setTimeout(() => setShowPickupDropdown(false), 200)}
+                        onFocus={() => pickupSuggestions.length > 0 && setShowPickupDropdown(true)}
                         required 
                     />
+                    {isSearchingPickup && <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)' }}>🔄</span>}
+                    {pickupCoords && <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#10B981' }}>✓</span>}
                     {showPickupDropdown && pickupSuggestions.length > 0 && (
                         <div className="location-dropdown">
-                            {pickupSuggestions.map((area, idx) => (
-                                <div 
-                                    key={idx}
-                                    className="dropdown-item"
-                                    onMouseDown={() => { setPickup(area.name); setShowPickupDropdown(false); }}
-                                >
-                                    📍 {area.name}
+                            {pickupSuggestions.map((result, idx) => (
+                                <div key={idx} className="dropdown-item" onMouseDown={() => selectPickup(result)}>
+                                    📍 {result.display_name.substring(0, 40)}...
                                 </div>
                             ))}
                         </div>
                     )}
                 </div>
-                {pickup.length >= 2 && !pickupValid && (
-                    <p className="validation-error">⚠️ Select a valid Kolkata location</p>
-                )}
                 
                 <div className="form-group" style={{ position: 'relative' }}>
                     <input 
                         type="text" 
-                        placeholder="🏁 Drop Location (e.g., Salt Lake)" 
+                        placeholder="🔍 Search Drop Location..." 
                         value={drop} 
                         onChange={(e) => handleDropChange(e.target.value)}
-                        onFocus={() => drop.length >= 2 && setShowDropDropdown(true)}
-                        onBlur={() => setTimeout(() => setShowDropDropdown(false), 200)}
+                        onFocus={() => dropSuggestions.length > 0 && setShowDropDropdown(true)}
                         required 
                     />
+                    {isSearchingDrop && <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)' }}>🔄</span>}
+                    {dropCoords && <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#10B981' }}>✓</span>}
                     {showDropDropdown && dropSuggestions.length > 0 && (
                         <div className="location-dropdown">
-                            {dropSuggestions.map((area, idx) => (
-                                <div 
-                                    key={idx}
-                                    className="dropdown-item"
-                                    onMouseDown={() => { setDrop(area.name); setShowDropDropdown(false); }}
-                                >
-                                    📍 {area.name}
+                            {dropSuggestions.map((result, idx) => (
+                                <div key={idx} className="dropdown-item" onMouseDown={() => selectDrop(result)}>
+                                    📍 {result.display_name.substring(0, 40)}...
                                 </div>
                             ))}
                         </div>
                     )}
                 </div>
-                {drop.length >= 2 && !dropValid && (
-                    <p className="validation-error">⚠️ Select a valid Kolkata location</p>
-                )}
                 
                 <div className="fare-section">
-                    <button type="button" onClick={calculateFare} className="btn btn-secondary">
+                    <button type="button" onClick={calculateFare} className="btn btn-secondary" disabled={!pickupCoords || !dropCoords}>
                         Estimate Fare
                     </button>
                     {fare > 0 && <span className="fare-display">₹{fare}</span>}
@@ -212,8 +207,9 @@ const HeroBookingForm = () => {
                 
                 <button 
                     type="submit" 
-                    disabled={fare === 0 || !pickupValid || !dropValid} 
+                    disabled={!isFormValid} 
                     className="btn btn-primary book-btn"
+                    style={{ opacity: !isFormValid ? 0.6 : 1 }}
                 >
                     {user ? 'Confirm Booking' : 'Login to Book'}
                 </button>
