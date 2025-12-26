@@ -7,62 +7,300 @@
     "lng": 88.3639
   },
   "areas": [
-    { "name": "Howrah", "lat": 22.5958, "lng": 88.2636 },
-    { "name": "Salt Lake", "lat": 22.5800, "lng": 88.4200 },
-    { "name": "Park Street", "lat": 22.5514, "lng": 88.3573 },
-    { "name": "Dum Dum", "lat": 22.6200, "lng": 88.4300 },
-    { "name": "Sealdah", "lat": 22.5654, "lng": 88.3749 },
-    { "name": "Ballygunge", "lat": 22.5285, "lng": 88.3620 },
-    { "name": "Jadavpur", "lat": 22.4992, "lng": 88.3700 },
-    { "name": "Garia", "lat": 22.4630, "lng": 88.3850 },
-    { "name": "Behala", "lat": 22.4860, "lng": 88.3090 },
-    { "name": "Tollygunge", "lat": 22.4980, "lng": 88.3480 },
-    { "name": "Esplanade", "lat": 22.5560, "lng": 88.3520 },
-    { "name": "Rajarhat", "lat": 22.5920, "lng": 88.4580 },
-    { "name": "New Town", "lat": 22.5920, "lng": 88.4580 },
-    { "name": "Bidhannagar", "lat": 22.5800, "lng": 88.4200 },
-    { "name": "Alipore", "lat": 22.5330, "lng": 88.3310 },
-    { "name": "Gariahat", "lat": 22.5170, "lng": 88.3670 },
-    { "name": "Lake Town", "lat": 22.5930, "lng": 88.4010 },
-    { "name": "Barasat", "lat": 22.7200, "lng": 88.4800 },
-    { "name": "Barrackpore", "lat": 22.7500, "lng": 88.3700 },
-    { "name": "Belghoria", "lat": 22.6600, "lng": 88.3800 },
-    { "name": "Bidhan Nagar", "lat": 22.5800, "lng": 88.4200 },
-    { "name": "College Street", "lat": 22.5760, "lng": 88.3630 },
-    { "name": "Dalhousie", "lat": 22.5680, "lng": 88.3470 },
-    { "name": "Dharmatala", "lat": 22.5550, "lng": 88.3510 },
-    { "name": "Entally", "lat": 22.5610, "lng": 88.3800 },
-    { "name": "Fort William", "lat": 22.5550, "lng": 88.3430 },
-    { "name": "Garden Reach", "lat": 22.5380, "lng": 88.2890 },
-    { "name": "Kalighat", "lat": 22.5190, "lng": 88.3440 },
-    { "name": "Kasba", "lat": 22.5170, "lng": 88.3880 },
-    { "name": "Kidderpore", "lat": 22.5220, "lng": 88.3140 },
-    { "name": "Lake Gardens", "lat": 22.5070, "lng": 88.3640 },
-    { "name": "Maniktala", "lat": 22.5950, "lng": 88.3800 },
-    { "name": "Mullick Bazar", "lat": 22.5580, "lng": 88.3560 },
-    { "name": "New Alipore", "lat": 22.5050, "lng": 88.3310 },
-    { "name": "Patuli", "lat": 22.4680, "lng": 88.3910 },
-    { "name": "Phoolbagan", "lat": 22.5790, "lng": 88.3900 },
-    { "name": "Santoshpur", "lat": 22.4760, "lng": 88.3900 },
-    { "name": "Shyambazar", "lat": 22.5960, "lng": 88.3700 },
-    { "name": "Sodepur", "lat": 22.6980, "lng": 88.3870 },
-    { "name": "Sovabazar", "lat": 22.5880, "lng": 88.3610 },
-    { "name": "Tangra", "lat": 22.5450, "lng": 88.3880 },
-    { "name": "Ultadanga", "lat": 22.5880, "lng": 88.3930 },
-    { "name": "VIP Road", "lat": 22.6100, "lng": 88.4200 },
-    { "name": "Watgunge", "lat": 22.5260, "lng": 88.3320 },
-    { "name": "Jodhpur Park", "lat": 22.5040, "lng": 88.3570 },
-    { "name": "Southern Avenue", "lat": 22.5130, "lng": 88.3570 },
-    { "name": "Rashbehari", "lat": 22.5180, "lng": 88.3530 },
-    { "name": "Deshapriya Park", "lat": 22.5180, "lng": 88.3530 },
-    { "name": "Ruby", "lat": 22.5000, "lng": 88.3900 },
-    { "name": "Science City", "lat": 22.5390, "lng": 88.3960 },
-    { "name": "Beliaghata", "lat": 22.5670, "lng": 88.3870 },
-    { "name": "Topsia", "lat": 22.5410, "lng": 88.3830 },
-    { "name": "EM Bypass", "lat": 22.5300, "lng": 88.4000 },
-    { "name": "Bypass", "lat": 22.5300, "lng": 88.4000 },
-    { "name": "Airport", "lat": 22.6547, "lng": 88.4467 },
-    { "name": "Netaji Subhash Chandra Bose International Airport", "lat": 22.6547, "lng": 88.4467 },
-    { "name": "Kolkata", "lat": 22.5726, "lng": 88.3639 }
+    {
+      "name": "Howrah",
+      "lat": 22.5958,
+      "lng": 88.2636
+    },
+    {
+      "name": "Salt Lake",
+      "lat": 22.58,
+      "lng": 88.42
+    },
+    {
+      "name": "Park Street",
+      "lat": 22.5514,
+      "lng": 88.3573
+    },
+    {
+      "name": "Dum Dum",
+      "lat": 22.62,
+      "lng": 88.43
+    },
+    {
+      "name": "Sealdah",
+      "lat": 22.5654,
+      "lng": 88.3749
+    },
+    {
+      "name": "Ballygunge",
+      "lat": 22.5285,
+      "lng": 88.362
+    },
+    {
+      "name": "Jadavpur",
+      "lat": 22.4992,
+      "lng": 88.37
+    },
+    {
+      "name": "Garia",
+      "lat": 22.463,
+      "lng": 88.385
+    },
+    {
+      "name": "Behala",
+      "lat": 22.486,
+      "lng": 88.309
+    },
+    {
+      "name": "Tollygunge",
+      "lat": 22.498,
+      "lng": 88.348
+    },
+    {
+      "name": "Esplanade",
+      "lat": 22.556,
+      "lng": 88.352
+    },
+    {
+      "name": "Rajarhat",
+      "lat": 22.592,
+      "lng": 88.458
+    },
+    {
+      "name": "New Town",
+      "lat": 22.592,
+      "lng": 88.458
+    },
+    {
+      "name": "Bidhannagar",
+      "lat": 22.58,
+      "lng": 88.42
+    },
+    {
+      "name": "Alipore",
+      "lat": 22.533,
+      "lng": 88.331
+    },
+    {
+      "name": "Gariahat",
+      "lat": 22.517,
+      "lng": 88.367
+    },
+    {
+      "name": "Lake Town",
+      "lat": 22.593,
+      "lng": 88.401
+    },
+    {
+      "name": "Barasat",
+      "lat": 22.72,
+      "lng": 88.48
+    },
+    {
+      "name": "Barrackpore",
+      "lat": 22.75,
+      "lng": 88.37
+    },
+    {
+      "name": "Belghoria",
+      "lat": 22.66,
+      "lng": 88.38
+    },
+    {
+      "name": "Bidhan Nagar",
+      "lat": 22.58,
+      "lng": 88.42
+    },
+    {
+      "name": "College Street",
+      "lat": 22.576,
+      "lng": 88.363
+    },
+    {
+      "name": "Dalhousie",
+      "lat": 22.568,
+      "lng": 88.347
+    },
+    {
+      "name": "Dharmatala",
+      "lat": 22.555,
+      "lng": 88.351
+    },
+    {
+      "name": "Entally",
+      "lat": 22.561,
+      "lng": 88.38
+    },
+    {
+      "name": "Fort William",
+      "lat": 22.555,
+      "lng": 88.343
+    },
+    {
+      "name": "Garden Reach",
+      "lat": 22.538,
+      "lng": 88.289
+    },
+    {
+      "name": "Kalighat",
+      "lat": 22.519,
+      "lng": 88.344
+    },
+    {
+      "name": "Kasba",
+      "lat": 22.517,
+      "lng": 88.388
+    },
+    {
+      "name": "Kidderpore",
+      "lat": 22.522,
+      "lng": 88.314
+    },
+    {
+      "name": "Lake Gardens",
+      "lat": 22.507,
+      "lng": 88.364
+    },
+    {
+      "name": "Maniktala",
+      "lat": 22.595,
+      "lng": 88.38
+    },
+    {
+      "name": "Mullick Bazar",
+      "lat": 22.558,
+      "lng": 88.356
+    },
+    {
+      "name": "New Alipore",
+      "lat": 22.505,
+      "lng": 88.331
+    },
+    {
+      "name": "Patuli",
+      "lat": 22.468,
+      "lng": 88.391
+    },
+    {
+      "name": "Phoolbagan",
+      "lat": 22.579,
+      "lng": 88.39
+    },
+    {
+      "name": "Santoshpur",
+      "lat": 22.476,
+      "lng": 88.39
+    },
+    {
+      "name": "Shyambazar",
+      "lat": 22.596,
+      "lng": 88.37
+    },
+    {
+      "name": "Sodepur",
+      "lat": 22.698,
+      "lng": 88.387
+    },
+    {
+      "name": "Sovabazar",
+      "lat": 22.588,
+      "lng": 88.361
+    },
+    {
+      "name": "Tangra",
+      "lat": 22.545,
+      "lng": 88.388
+    },
+    {
+      "name": "Ultadanga",
+      "lat": 22.588,
+      "lng": 88.393
+    },
+    {
+      "name": "VIP Road",
+      "lat": 22.61,
+      "lng": 88.42
+    },
+    {
+      "name": "Watgunge",
+      "lat": 22.526,
+      "lng": 88.332
+    },
+    {
+      "name": "Jodhpur Park",
+      "lat": 22.504,
+      "lng": 88.357
+    },
+    {
+      "name": "Southern Avenue",
+      "lat": 22.513,
+      "lng": 88.357
+    },
+    {
+      "name": "Rashbehari",
+      "lat": 22.518,
+      "lng": 88.353
+    },
+    {
+      "name": "Deshapriya Park",
+      "lat": 22.518,
+      "lng": 88.353
+    },
+    {
+      "name": "Ruby",
+      "lat": 22.5,
+      "lng": 88.39
+    },
+    {
+      "name": "Science City",
+      "lat": 22.539,
+      "lng": 88.396
+    },
+    {
+      "name": "Beliaghata",
+      "lat": 22.567,
+      "lng": 88.387
+    },
+    {
+      "name": "Topsia",
+      "lat": 22.541,
+      "lng": 88.383
+    },
+    {
+      "name": "EM Bypass",
+      "lat": 22.53,
+      "lng": 88.4
+    },
+    {
+      "name": "Bypass",
+      "lat": 22.53,
+      "lng": 88.4
+    },
+    {
+      "name": "Airport",
+      "lat": 22.6547,
+      "lng": 88.4467
+    },
+    {
+      "name": "Netaji Subhash Chandra Bose International Airport",
+      "lat": 22.6547,
+      "lng": 88.4467
+    },
+    {
+      "name": "Kolkata",
+      "lat": 22.5726,
+      "lng": 88.3639
+    },
+    {
+      "name": "The West Bengal University of Health Sciences",
+      "lat": 22.5918,
+      "lng": 88.4123
+    },
+    {
+      "name": "Jadavpur University",
+      "lat": 22.4995,
+      "lng": 88.3711
+    }
   ]
 }

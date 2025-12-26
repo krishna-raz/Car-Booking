@@ -18,6 +18,17 @@ const Dashboard = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
     const [newDriver, setNewDriver] = useState({ name: '', email: '', password: '', phone: '', vehicle: '' });
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    
+    // Admin: Locations & Fare Config state
+    const [locations, setLocations] = useState([]);
+    const [fareConfig, setFareConfig] = useState({ baseFare: 30, perKmRate: 12, minimumFare: 50 });
+    const [newLocation, setNewLocation] = useState({ name: '', lat: '', lng: '' });
+    const [createRideForm, setCreateRideForm] = useState({ userId: '', pickup: '', drop: '', fare: 0 });
+    
+    // Admin: Location search state (for Nominatim)
+    const [locationSearch, setLocationSearch] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
 
     useEffect(() => {
         if (!user) return;
@@ -53,6 +64,21 @@ const Dashboard = () => {
                     drivers: driversRes.data.length
                 });
                 setAvailableDrivers(driversRes.data);
+                
+                // Fetch locations and fare config for admin
+                try {
+                    const locRes = await api.get('/admin/locations');
+                    setLocations(locRes.data.areas || []);
+                } catch (err) {
+                    console.log('Error fetching locations');
+                }
+                
+                try {
+                    const fareRes = await api.get('/admin/fare-config');
+                    setFareConfig(fareRes.data);
+                } catch (err) {
+                    console.log('Error fetching fare config');
+                }
             }
         } catch (error) {
             console.error("Error fetching data", error);
@@ -214,6 +240,9 @@ const Dashboard = () => {
             tabs = [
                 { id: 'dashboard', label: '📊 Dashboard' },
                 { id: 'new-rides', label: '🚗 New Ride Requests' },
+                { id: 'create-ride', label: '➕ Create Ride' },
+                { id: 'locations', label: '📍 Locations' },
+                { id: 'fare-settings', label: '💵 Fare Settings' },
                 { id: 'payments', label: '💰 Payments' },
                 { id: 'drivers', label: '👷 Drivers' },
                 { id: 'users', label: '👥 Users' },
@@ -2444,6 +2473,321 @@ const Dashboard = () => {
                                 <span>₹{ride.fare} | {ride.status}</span>
                             </div>
                         ))}
+                    </div>
+                </>
+            );
+        } else if (activeTab === 'locations') {
+            // Location Management Tab with OpenStreetMap Nominatim Search (FREE)
+
+            // Search locations using Nominatim API (Free)
+            const searchLocationAPI = async (query) => {
+                if (!query || query.length < 3) {
+                    setSearchResults([]);
+                    return;
+                }
+                setIsSearching(true);
+                try {
+                    // Search in West Bengal area
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}, West Bengal, India&limit=5`
+                    );
+                    const data = await response.json();
+                    setSearchResults(data);
+                } catch (error) {
+                    console.error('Search error:', error);
+                }
+                setIsSearching(false);
+            };
+
+            // Debounce search
+            const handleSearchChange = (value) => {
+                setLocationSearch(value);
+                setTimeout(() => searchLocationAPI(value), 500);
+            };
+
+            // Select location from search results
+            const selectSearchLocation = (result) => {
+                const name = result.display_name.split(',')[0]; // Get first part as name
+                setNewLocation({
+                    name: name,
+                    lat: parseFloat(result.lat).toFixed(4),
+                    lng: parseFloat(result.lon).toFixed(4)
+                });
+                setLocationSearch('');
+                setSearchResults([]);
+            };
+
+            const handleAddLocation = async (e) => {
+                e.preventDefault();
+                try {
+                    await api.post('/admin/locations', newLocation);
+                    alert('Location added successfully!');
+                    setNewLocation({ name: '', lat: '', lng: '' });
+                    fetchData();
+                } catch (error) {
+                    alert(error.response?.data?.message || 'Error adding location');
+                }
+            };
+
+            const handleDeleteLocation = async (name) => {
+                if (!confirm(`Delete location "${name}"?`)) return;
+                try {
+                    await api.delete(`/admin/locations/${encodeURIComponent(name)}`);
+                    alert('Location deleted!');
+                    fetchData();
+                } catch (error) {
+                    alert('Error deleting location');
+                }
+            };
+
+            return (
+                <>
+                    <div style={{ marginBottom: '2rem' }}>
+                        <h1 style={{ marginBottom: '0.5rem' }}>📍 Location Management</h1>
+                        <p className="text-muted">Add or remove pickup/drop locations for Kolkata Ride.</p>
+                    </div>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem' }}>
+                        {/* Add Location Form */}
+                        <div className="card" style={{ padding: '1.5rem' }}>
+                            <h3 style={{ marginBottom: '1.5rem' }}>➕ Add New Location</h3>
+                            
+                            {/* Search Box */}
+                            <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                                    🔍 Search Location (Auto-fill coordinates)
+                                </label>
+                                <input 
+                                    type="text" 
+                                    placeholder="Search any Kolkata location..."
+                                    value={locationSearch}
+                                    onChange={e => handleSearchChange(e.target.value)}
+                                    style={{ width: '100%', marginBottom: 0 }}
+                                />
+                                {isSearching && (
+                                    <p style={{ fontSize: '0.8rem', color: 'var(--primary)', marginTop: '0.5rem' }}>
+                                        🔄 Searching...
+                                    </p>
+                                )}
+                                
+                                {/* Search Results Dropdown */}
+                                {searchResults.length > 0 && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '100%',
+                                        left: 0,
+                                        right: 0,
+                                        background: 'var(--bg-card)',
+                                        border: '1px solid var(--border)',
+                                        borderRadius: '8px',
+                                        maxHeight: '200px',
+                                        overflowY: 'auto',
+                                        zIndex: 100,
+                                        boxShadow: '0 4px 15px rgba(0,0,0,0.15)'
+                                    }}>
+                                        {searchResults.map((result, idx) => (
+                                            <div 
+                                                key={idx}
+                                                onClick={() => selectSearchLocation(result)}
+                                                style={{
+                                                    padding: '0.75rem 1rem',
+                                                    cursor: 'pointer',
+                                                    borderBottom: '1px solid var(--border)',
+                                                    fontSize: '0.85rem'
+                                                }}
+                                                onMouseEnter={e => e.target.style.background = 'rgba(99, 102, 241, 0.1)'}
+                                                onMouseLeave={e => e.target.style.background = 'transparent'}
+                                            >
+                                                📍 {result.display_name.substring(0, 50)}...
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div style={{ 
+                                padding: '0.75rem', 
+                                background: 'rgba(16, 185, 129, 0.1)', 
+                                borderRadius: '8px', 
+                                marginBottom: '1rem',
+                                fontSize: '0.8rem',
+                                color: '#10B981'
+                            }}>
+                                💡 Type location name above to auto-fill coordinates
+                            </div>
+                            
+                            <form onSubmit={handleAddLocation}>
+                                <div className="form-group">
+                                    <label>Location Name</label>
+                                    <input type="text" placeholder="e.g., New Town" value={newLocation.name} onChange={e => setNewLocation({...newLocation, name: e.target.value})} required />
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                    <div className="form-group">
+                                        <label>Latitude</label>
+                                        <input type="number" step="0.0001" placeholder="22.5800" value={newLocation.lat} onChange={e => setNewLocation({...newLocation, lat: e.target.value})} required />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Longitude</label>
+                                        <input type="number" step="0.0001" placeholder="88.4200" value={newLocation.lng} onChange={e => setNewLocation({...newLocation, lng: e.target.value})} required />
+                                    </div>
+                                </div>
+                                <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}>Add Location</button>
+                            </form>
+                        </div>
+                        
+                        {/* Locations List */}
+                        <div className="card" style={{ padding: '1.5rem' }}>
+                            <h3 style={{ marginBottom: '1rem' }}>📋 All Locations ({locations.length})</h3>
+                            <div style={{ maxHeight: '500px', overflowY: 'auto', display: 'grid', gap: '0.5rem' }}>
+                                {locations.map((loc, idx) => (
+                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: 'rgba(99, 102, 241, 0.05)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                        <div>
+                                            <p style={{ fontWeight: '500' }}>{loc.name}</p>
+                                            <p className="text-muted" style={{ fontSize: '0.75rem' }}>Lat: {loc.lat}, Lng: {loc.lng}</p>
+                                        </div>
+                                        <button onClick={() => handleDeleteLocation(loc.name)} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', padding: '0.4rem 0.75rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>🗑 Delete</button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </>
+            );
+        } else if (activeTab === 'fare-settings') {
+            // Fare Settings Tab
+            const handleSaveFareConfig = async (e) => {
+                e.preventDefault();
+                try {
+                    await api.put('/admin/fare-config', fareConfig);
+                    alert('Fare settings updated successfully!');
+                } catch (error) {
+                    alert('Error updating fare settings');
+                }
+            };
+
+            return (
+                <>
+                    <div style={{ marginBottom: '2rem' }}>
+                        <h1 style={{ marginBottom: '0.5rem' }}>💵 Fare Settings</h1>
+                        <p className="text-muted">Configure base fare, per kilometer rate, and minimum fare.</p>
+                    </div>
+                    
+                    <div className="card" style={{ padding: '2rem', maxWidth: '500px' }}>
+                        <form onSubmit={handleSaveFareConfig}>
+                            <div className="form-group">
+                                <label>🏁 Base Fare (₹)</label>
+                                <input type="number" value={fareConfig.baseFare} onChange={e => setFareConfig({...fareConfig, baseFare: Number(e.target.value)})} required style={{ fontSize: '1.2rem' }} />
+                                <p className="text-muted" style={{ fontSize: '0.8rem', marginTop: '0.25rem' }}>Initial fare charged for every ride</p>
+                            </div>
+                            
+                            <div className="form-group">
+                                <label>📏 Per Kilometer Rate (₹)</label>
+                                <input type="number" value={fareConfig.perKmRate} onChange={e => setFareConfig({...fareConfig, perKmRate: Number(e.target.value)})} required style={{ fontSize: '1.2rem' }} />
+                                <p className="text-muted" style={{ fontSize: '0.8rem', marginTop: '0.25rem' }}>Charge per kilometer traveled</p>
+                            </div>
+                            
+                            <div className="form-group">
+                                <label>⬇️ Minimum Fare (₹)</label>
+                                <input type="number" value={fareConfig.minimumFare} onChange={e => setFareConfig({...fareConfig, minimumFare: Number(e.target.value)})} required style={{ fontSize: '1.2rem' }} />
+                                <p className="text-muted" style={{ fontSize: '0.8rem', marginTop: '0.25rem' }}>Minimum fare for short distance rides</p>
+                            </div>
+                            
+                            <div style={{ padding: '1.25rem', background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.1))', borderRadius: '12px', marginTop: '1.5rem', marginBottom: '1.5rem' }}>
+                                <p style={{ fontWeight: '600', marginBottom: '0.75rem' }}>📊 Fare Formula</p>
+                                <p className="text-muted">Fare = ₹{fareConfig.baseFare} + (Distance × ₹{fareConfig.perKmRate}/km)</p>
+                                <p style={{ fontSize: '0.85rem', marginTop: '0.5rem', color: '#10B981' }}>Example: 5km = ₹{fareConfig.baseFare + 5 * fareConfig.perKmRate}</p>
+                            </div>
+                            
+                            <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>💾 Save Fare Settings</button>
+                        </form>
+                    </div>
+                </>
+            );
+        } else if (activeTab === 'create-ride') {
+            // Create Ride Tab
+            const calculateDistance = (lat1, lng1, lat2, lng2) => {
+                const R = 6371;
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLng = (lng2 - lng1) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng/2) * Math.sin(dLng/2);
+                return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            };
+
+            const handleCalculateFare = () => {
+                const pickupLoc = locations.find(l => l.name === createRideForm.pickup);
+                const dropLoc = locations.find(l => l.name === createRideForm.drop);
+                if (!pickupLoc || !dropLoc) { alert('Select valid locations'); return; }
+                const distance = calculateDistance(pickupLoc.lat, pickupLoc.lng, dropLoc.lat, dropLoc.lng);
+                setCreateRideForm({...createRideForm, fare: Math.max(Math.round(fareConfig.baseFare + distance * fareConfig.perKmRate), fareConfig.minimumFare)});
+            };
+
+            const handleCreateRide = async (e) => {
+                e.preventDefault();
+                if (!createRideForm.userId || !createRideForm.pickup || !createRideForm.drop || !createRideForm.fare) { alert('Fill all fields'); return; }
+                const pickupLoc = locations.find(l => l.name === createRideForm.pickup);
+                const dropLoc = locations.find(l => l.name === createRideForm.drop);
+                try {
+                    await api.post('/admin/rides', {
+                        userId: createRideForm.userId,
+                        pickupLocation: { address: createRideForm.pickup, lat: pickupLoc.lat, lng: pickupLoc.lng },
+                        dropLocation: { address: createRideForm.drop, lat: dropLoc.lat, lng: dropLoc.lng },
+                        fare: createRideForm.fare
+                    });
+                    alert('Ride created!');
+                    setCreateRideForm({ userId: '', pickup: '', drop: '', fare: 0 });
+                    fetchData();
+                } catch (error) { alert('Error creating ride'); }
+            };
+
+            return (
+                <>
+                    <div style={{ marginBottom: '2rem' }}>
+                        <h1 style={{ marginBottom: '0.5rem' }}>➕ Create Manual Ride</h1>
+                        <p className="text-muted">Create a ride booking on behalf of a user.</p>
+                    </div>
+                    
+                    <div className="card" style={{ padding: '2rem', maxWidth: '600px' }}>
+                        <form onSubmit={handleCreateRide}>
+                            <div className="form-group">
+                                <label>👤 Select User</label>
+                                <select value={createRideForm.userId} onChange={e => setCreateRideForm({...createRideForm, userId: e.target.value})} required style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-input)' }}>
+                                    <option value="">Select a user...</option>
+                                    {allUsers.filter(u => u.role === 'user').map(u => (<option key={u._id} value={u._id}>{u.name} ({u.phone || u.email})</option>))}
+                                </select>
+                            </div>
+                            
+                            <div className="form-group">
+                                <label>📍 Pickup Location</label>
+                                <select value={createRideForm.pickup} onChange={e => setCreateRideForm({...createRideForm, pickup: e.target.value})} required style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-input)' }}>
+                                    <option value="">Select pickup...</option>
+                                    {locations.map((loc, idx) => (<option key={idx} value={loc.name}>{loc.name}</option>))}
+                                </select>
+                            </div>
+                            
+                            <div className="form-group">
+                                <label>🏁 Drop Location</label>
+                                <select value={createRideForm.drop} onChange={e => setCreateRideForm({...createRideForm, drop: e.target.value})} required style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-input)' }}>
+                                    <option value="">Select drop...</option>
+                                    {locations.map((loc, idx) => (<option key={idx} value={loc.name}>{loc.name}</option>))}
+                                </select>
+                            </div>
+                            
+                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', marginBottom: '1rem' }}>
+                                <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+                                    <label>💰 Fare (₹)</label>
+                                    <input type="number" value={createRideForm.fare} onChange={e => setCreateRideForm({...createRideForm, fare: Number(e.target.value)})} required style={{ fontSize: '1.2rem' }} />
+                                </div>
+                                <button type="button" onClick={handleCalculateFare} className="btn btn-secondary">🧮 Calculate</button>
+                            </div>
+                            
+                            {createRideForm.fare > 0 && (
+                                <div style={{ padding: '1rem', background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 182, 212, 0.1))', borderRadius: '10px', marginBottom: '1.5rem', textAlign: 'center' }}>
+                                    <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#10B981' }}>₹{createRideForm.fare}</p>
+                                </div>
+                            )}
+                            
+                            <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={!createRideForm.fare}>🚕 Create Ride</button>
+                        </form>
                     </div>
                 </>
             );

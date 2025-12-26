@@ -1,7 +1,24 @@
 const express = require('express');
 const router = express.Router();
 const Ride = require('../models/Ride');
+const FareConfig = require('../models/FareConfig');
 const { protect, admin } = require('../middleware/authMiddleware');
+
+// @route   GET /api/rides/fare-config
+// @desc    Get public fare configuration for fare calculation
+// @access  Public
+router.get('/fare-config', async (req, res) => {
+    try {
+        const config = await FareConfig.getConfig();
+        res.json({
+            baseFare: config.baseFare,
+            perKmRate: config.perKmRate,
+            minimumFare: config.minimumFare
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching fare config' });
+    }
+});
 
 // @route   POST /api/rides
 // @desc    Create a ride request

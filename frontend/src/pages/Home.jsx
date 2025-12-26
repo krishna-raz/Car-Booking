@@ -24,10 +24,50 @@ const HeroBookingForm = () => {
     const [dropSuggestions, setDropSuggestions] = useState([]);
     const [showPickupDropdown, setShowPickupDropdown] = useState(false);
     const [showDropDropdown, setShowDropDropdown] = useState(false);
+    const [fareConfig, setFareConfig] = useState({ baseFare: 30, perKmRate: 12, minimumFare: 50 });
+
+    // Fetch fare config on mount
+    useEffect(() => {
+        const fetchFareConfig = async () => {
+            try {
+                const { data } = await api.get('/rides/fare-config');
+                setFareConfig(data);
+            } catch (error) {
+                console.log('Using default fare config');
+            }
+        };
+        fetchFareConfig();
+    }, []);
+
+    // Calculate distance using Haversine formula
+    const calculateDistance = (lat1, lng1, lat2, lng2) => {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLng/2) * Math.sin(dLng/2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    };
 
     const calculateFare = () => {
-        const randomFare = Math.floor(Math.random() * 200) + 50;
-        setFare(randomFare);
+        const pickupArea = kolkataLocations.areas.find(a => 
+            pickup.toLowerCase().includes(a.name.toLowerCase())
+        );
+        const dropArea = kolkataLocations.areas.find(a => 
+            drop.toLowerCase().includes(a.name.toLowerCase())
+        );
+        
+        if (pickupArea && dropArea) {
+            const distance = calculateDistance(pickupArea.lat, pickupArea.lng, dropArea.lat, dropArea.lng);
+            let calculatedFare = fareConfig.baseFare + (distance * fareConfig.perKmRate);
+            calculatedFare = Math.max(calculatedFare, fareConfig.minimumFare);
+            setFare(Math.round(calculatedFare));
+        } else {
+            // Fallback if locations not found
+            const defaultFare = fareConfig.baseFare + (5 * fareConfig.perKmRate);
+            setFare(Math.round(Math.max(defaultFare, fareConfig.minimumFare)));
+        }
     };
 
     const searchLocations = (query) => {
